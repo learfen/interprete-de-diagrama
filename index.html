@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script>
+      window.addEventListener("message", function(e){
+        if(e.origin.indexOf('app.diagrams.net') > 0){
+          document.querySelector('#data').value = e.data
+          document.querySelector('#evalExe').click()
+        }
+      });
+    </script>
+</head>
+<body>  <div id="message"></div>
+        <!-- CSS only -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
+        <div id="form" class="container pb-5">
+            <h1>Interprete de diagramas</h1>
+            <b>Codigo del diagrama</b>
+            <p>Estos diagramas son creados en el sitio <a href="https://draw.io">draw.io</a> y el codigo se obtiene en el menu Extras > Editar diagrama</p>
+            <b>Recuerde no usar ñ o acentos o espacios o caracteres especiales, solo se permite el abecedario en ingles</b>
+            <textarea style="min-width:100%;max-width:100%;height:100px" id="data"></textarea>
+            <button class="btn btn-success" id="evalExe">Evaluar</button>
+    
+            <h2 class="py-5">Ejemplos</h2>
+            <template class="m-1 rounded-2 p-1 "  style="border:1px #aaa solid">
+              <h3>title</h3>
+              <ul>
+                <li>detail</li>
+                <button class="btn" onclick="copyToClipBoard('x')">Click aqui para copiar este ejemplo</button>
+              </ul>
+              <img src="">
+              <textarea id="x" class="d-none"></textarea>
+            </template>
+            <div id="examples">
+                <button class="btn" id="button-get-examples">Ver ejemplos</button>
+            </div>
+            </div>
+    
+        </div>
+        <div id="resultRenderized" class=" mb-2 d-none">
+          <div class="container">
+            <h1>Resultado</h1>
+            <div class="d-flex mb-5">
+              <div class="p-2 w-50 text-bg-light" style="border-right:2px #eee solid">
+                  <div> <h4>Interfaz grafica</h4> <div id="gui"></div> </div>
+              </div>
+                <div class="p-2 w-50 bg-primary text-white">
+                    <h2>Salida</h2>
+                    <div id="printer-output" style="width: 100%; height: 100%;"></div>
+                </div>
+            </div>
+            <div class="p-2  bg-info text-white"> 
+              <button class="btn btn-info py-2" onclick="this.nextElementSibling.classList.remove('d-none')">Funciones creadas</button> <div class="d-none" id="functions"></div> 
+            </div>
+            <pre class="text-bg-dark color-white p-2"><button class="py-2 btn btn-dark " onclick="this.nextElementSibling.classList.remove('d-none')">Codigo Js generado</button><div class="px-5 d-none" ><code id="resultJS"></code></div></pre>
+          </div>
+        </div>
+        <div id="diagramAsHtml"></div>
+
+        <code id="codeExcel" style="display:none">
+          var content = {};
+var sheets = {};
+function createVarsFromQuery(query) {
+	let equal = query.search("=");
+	let resultVar = query.slice(0, equal);
+	let operationVars = query
+		.slice(equal)
+		.split("")
+		.map((item) => (esLetra(item) ? item.trim() : ","))
+		.join("")
+		.split(",");
+	return {
+		resultVar,
+		operationVars,
+		string: `let { ${[...resultVar, ...operationVars].join(" , ")} } `,
+	};
+}
+class Table {
+	constructor(page, table) {
+		this.page = page;
+		this.table = table;
+		this.headers = content[this.page].tablesMeta[table].headers;
+		this.startRow = +content[this.page].tablesMeta[table].startData - 1;
+		this.startColumn = +content[this.page].tablesMeta[table].cell - 1;
+		this.cell = +content[this.page].tablesMeta[table].cell;
+		this.end = +content[this.page].tablesMeta[table].end;
+	}
+	funcion(column, name, ...args) {
+		let result = [];
+		const columnData = this.getCol(column);
+		do {
+			result = window[name](
+				{ instance: this, column },
+				this.getCol(column)[cell],
+				+cell + 1,
+				...args.map((item) => t.celda(index, item))
+			);
+		} while (result != undefined);
+		return result;
+	}
+	getCol({ column }) {
+		let col = [];
+		for (
+			let row = +this.startRow + 1;
+			row < content[this.page].data.length;
+			row++
+		) {
+			const element = content[this.page].data[row];
+			col.push(element[column - 1]);
+		}
+		return col;
+	}
+	setCol({ column }, val, nameNewColumn) {
+		let n = {};
+		val.forEach((item, index) => (n[index + +this.startRow + 1] = item));
+		for (
+			let row = +this.startRow + 1;
+			row < content[this.page].data.length;
+			row++
+		) {
+			content[this.page].data[row][column - 1] = n[row] ?? "";
+		}
+	}
+	columna(columna, value, name) {
+		if (name) {
+			this.setHeader(name);
+			columna = name;
+			for (
+				let index = 0;
+				index <= content[this.page].data.length;
+				index++
+			) {
+				content[this.page].data[
+					content[this.page].tablesMeta[0].headers.length
+				][+this.startRow + index] = "";
+			}
+		}
+		let column =
+			typeof columna == "string"
+				? this.headers.indexOf(columna) + 1
+				: columna;
+		if (value == undefined) return this.getCol({ column });
+		this.setCol({ column }, value, name);
+	}
+	setHeader(name) {
+		content[this.page].tablesMeta[this.table].headers.push(name);
+		content[this.page].tablesMeta[this.table].end++;
+		let column = content[this.page].tablesMeta[this.table].headers.length;
+		let row = 0;
+		content[this.page].data[row + +this.startRow][
+			+column + this.startColumn
+		] = name;
+	}
+	getCell({ row, column }) {
+		return content[this.page].data[row + +this.startRow][
+			+column + this.startColumn
+		];
+	}
+	celda(fila, columna, value) {
+		console.log(fila, columna, value);
+		if (value == undefined)
+			return this.getCell({
+				row: fila,
+				column:
+					typeof columna == "string"
+						? this.headers.indexOf(columna) + 1
+						: columna,
+			});
+		this.setCell({
+			row: fila,
+			column:
+				typeof columna == "string"
+					? this.headers.indexOf(columna) + 1
+					: columna,
+			value,
+		});
+	}
+	setCell({ column, row, value }) {
+		content[this.page].data[row + +this.startRow][
+			+column + this.startColumn
+		] = value;
+	}
+	getRow({ row }) {
+		return content[this.page].data[row + +this.startRow];
+	}
+	fila(fila) {
+		return this.getRow({ row: fila }).slice(this.cell, this.end);
+	}
+	filas(fila) {
+		let length = this.columna(1).length;
+		let filas = [];
+		for (let row = 0; row < length; row++) {
+			filas.push(this.getRow({ row }).slice(this.cell, this.end));
+		}
+		return filas;
+	}
+}
+
+function parseExcelFile2(inputElement, next) {
+	var files = inputElement.files || [];
+	if (!files.length) return;
+	var file = files[0];
+	var reader = new FileReader();
+	reader.onloadend = function (event) {
+		var arrayBuffer = reader.result;
+		var workbook = new ExcelJS.Workbook();
+		workbook.xlsx.load(arrayBuffer).then(function (workbook) {
+			var result = {};
+			const val = (cell) => {
+				if (typeof cell != "object") return cell;
+				try {
+					return cell["result"] ? cell["result"] : cell;
+				} catch (error) {
+					return cell;
+				}
+			};
+			workbook.worksheets.forEach(function (sheet) {
+				sheets[sheet.name] = {
+					id: sheet.id,
+					name: sheet.name,
+					data: [],
+				};
+				sheet.eachRow(function (row, rowNumber) {
+					if (!sheets[sheet.name].data[rowNumber])
+						sheets[sheet.name].data[rowNumber] = [];
+					let newRow = row.values.map((item) => val(item));
+					newRow.splice(0, 1);
+					sheets[sheet.name].data[rowNumber] = newRow;
+				});
+			});
+			next();
+		});
+	};
+	reader.readAsArrayBuffer(file);
+}
+
+function defineHeaders(content, page) {
+	for (let tableMeta in content[page].tablesMeta) {
+		let meta = content[page].tablesMeta[tableMeta];
+		let row1 = [...content[page].data[1]].slice(meta.cell, meta.end + 1);
+		let row2 = [...content[page].data[2]].slice(meta.cell, meta.end + 1);
+		content[page].tablesMeta[tableMeta].startData = 2;
+		content[page].tablesMeta[tableMeta].headers = row1;
+		content[page].tablesMeta[tableMeta].tableName = page;
+
+		row1 = Array.from(new Set(row1)).filter((item) => item);
+		row2 = Array.from(new Set(row2)).filter((item) => item);
+		if (row1.length < row2.length) {
+			tableName = row1[0];
+			content[page].tablesMeta[tableMeta].tableName = row1[0];
+			content[page].tablesMeta[tableMeta].startData = 3;
+			content[page].tablesMeta[tableMeta].headers = row2;
+		}
+	}
+	return content;
+}
+
+function defineTable(content, page) {
+	let tableName = [];
+	let data = content[page].data;
+	content[page].tablesMeta = [];
+	let lastContent = -1;
+	let lastNull = -1;
+	const valCell = (cell) => {
+		try {
+			return cell["result"] ? cell["result"] : cell;
+		} catch (error) {
+			return cell;
+		}
+	};
+	for (let cell = 0; cell < data[1].length; cell++) {
+		if (
+			valCell(data[1][cell]) != undefined &&
+			valCell(data[1][cell]) != null
+		) {
+			lastContent = +cell;
+			if (+cell > 0) {
+				if (
+					valCell(data[1][+cell - 1]) == null ||
+					valCell(data[1][+cell - 1]) == undefined
+				)
+					content[page].tablesMeta.push({
+						cell: +cell,
+						index: content[page].tablesMeta.length,
+						end: +cell - 1,
+					});
+			} else {
+				content[page].tablesMeta.push({
+					cell: +cell,
+					index: content[page].tablesMeta.length,
+					end: +cell - 1,
+				});
+			}
+		} else {
+			lastNull = +cell;
+			let cellIndex = content[page].tablesMeta.length - 1;
+			content[page].tablesMeta[cellIndex]["end"] = +cell - 1;
+		}
+	}
+	content[page].tablesMeta[content[page].tablesMeta.length - 1].end =
+		data[1].length;
+	content = defineHeaders(content, page);
+	return content;
+}
+
+async function getSheetContent(sheet) {
+	content[sheet.name] = sheet;
+	nextSheet();
+}
+
+function findHeaderInTable(table) {
+	for (let tableIndex in table) {
+		let row = table[tableIndex];
+		if (Array.isArray(row)) {
+			let copy = {};
+			for (let item of [...row]) {
+				if (item != null) {
+					if (copy[item] != undefined) copy[item] += 1;
+					else copy[item] = 1;
+				}
+			}
+			if (Object.values(copy).filter((item) => +item > 1).length == 0) {
+				let x = [];
+				for (let index = 0; index < row.length; index++) {
+					x[index] = !!row[index];
+				}
+				let mark = [];
+				let start = null;
+				for (let t in x) {
+					let xData = x[t];
+					if (start == null) {
+						if (xData == true) {
+							start = true;
+							mark.push(+t);
+						}
+					} else {
+						if (xData != start) {
+							start = !start;
+							mark.push(+t);
+						}
+					}
+				}
+				mark.push(x.length);
+				let cursors = [];
+				mark.map((item) => {
+					if (cursors.length == 0) {
+						cursors.push([item]);
+					} else {
+						if (cursors[cursors.length - 1].length == 1)
+							cursors[cursors.length - 1].push(item);
+						else cursors.push([item]);
+					}
+				});
+				let headers = [];
+				cursors.map((cursor) => {
+					headers.push({
+						name: row.slice(cursor[0], cursor[1]),
+						cursor,
+						table: tableIndex,
+					});
+				});
+				if (!table["headersNew"]) table["headersNew"] = [];
+				table["headers"] = headers;
+				break;
+			}
+		}
+	}
+}
+
+function nextSheet() {
+	if (Object.keys(content).length == Object.keys(sheets).length) {
+		for (let page in content) {
+			content = defineTable(content, page);
+		}
+		return excel();
+	}
+	getSheetContent(Object.values(sheets)[Object.keys(content).length]);
+}
+
+function archivo(page, table) {
+	let headers = {
+		meta(k) {
+			if (k) return content[page].tablesMeta[table][k];
+			return content[page].tablesMeta[table];
+		},
+		data: {},
+		manager(k, v) {
+			if (headers.data[k]) {
+				if (v == undefined) {
+					return headers.data[k]();
+				}
+				headers.data[k](v);
+			}
+			return headers[k];
+		},
+	};
+	for (let name of content[page].tablesMeta[table].headers) {
+		headers.instancia = () => new Table(page, table);
+		headers.data[name] = (val) => {
+			if (val != undefined) {
+				headers.instancia().columna(name, val);
+			}
+			return headers.instancia().columna(name);
+		};
+	}
+	return new Proxy(headers, {
+		set(target, key, val) {
+			target.manager(key, val);
+			return target;
+		},
+		get(target, key) {
+			return target.manager(key);
+		},
+	});
+}
+
+function renderTable(tb) {
+	let tableData = tb.instancia().filas();
+	let table = document.createElement("table");
+    table.className = "table table-hover table-dark table-sm table-striped"
+	let tableHead = document.createElement("thead");
+    let headers = document.createElement("tr");
+    tableData[0].forEach(function (cellData) {
+        let cell = document.createElement("th");
+        cell.appendChild(document.createTextNode(cellData));
+        cell.setAttribute("scope","col")
+        headers.appendChild(cell);
+    });
+    tableHead.appendChild(headers);
+    tableData.splice(0,1)
+    let tableBody = document.createElement("tbody");
+
+	tableData.forEach(function (rowData) {
+		let row = document.createElement("tr");
+
+		rowData.forEach(function (cellData) {
+			let cell = document.createElement("td");
+			cell.appendChild(document.createTextNode(cellData));
+			row.appendChild(cell);
+		});
+		tableBody.appendChild(row);
+	});
+
+	table.appendChild(tableHead)
+    table.appendChild(tableBody);
+	return table;
+}
+
+function nuevaColumna(tb, name, data = []) {
+	tb.instancia().columna(0, data, name);
+	return tb;
+}
+
+function columna(tb, name, def) {
+	if (def == undefined) return nuevaColumna(tb, name);
+	if (typeof def != "function") return nuevaColumna(tb, name, def);
+	if (tb.instancia().headers.indexOf(name) == -1) nuevaColumna(tb, name);
+	let cursor = 1;
+	let end = false;
+	let data = tb.instancia().filas();
+	let result = [];
+	data.forEach((item, rowIndex) => {
+		if (rowIndex < 1) return true;
+		let row = {};
+		tb.instancia().headers.map((header, index) => {
+			row[header] = item[index];
+		});
+		result.push(def(row));
+	});
+	tb.instancia().columna(name, result);
+	return tb;
+}
+var excelInput = document.querySelector("input[name=excel]");
+if (excelInput) {
+	excelInput.addEventListener("change", async function () {
+		content = {};
+		parseExcelFile2(excelInput, nextSheet);
+	});
+}
+
+          </code>
+        <script src="./index.js"></script>
+        <script src="./examples.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.26.0/polyfill.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/exceljs@1.13.0/dist/exceljs.min.js"></script>
+
+</body>
+</html>
